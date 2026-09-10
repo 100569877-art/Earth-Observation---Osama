@@ -1,2 +1,2 @@
-# Earth Observation - Osama 
-
+# eodp
+EODP main repository
