@@ -114,7 +114,14 @@ class opticalPhase(initIsm):
         :param band: band
         :return: TOA image 2D in radiances [mW/m2]
         """
-        # TODO
+        # TODO how to normalize isrf , area of isrf needs to be one
+
+        wv_isrf = wv_isrf * 1000
+        isrf, wv_isrf = readIsrf(self.auxdir + '/' + self.ismConfig.isrffile, band)
+
+       
+        # sum pf normalized isrf is 1
+
         return toa
 
 
