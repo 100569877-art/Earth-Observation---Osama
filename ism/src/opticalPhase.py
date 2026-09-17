@@ -130,11 +130,14 @@ class opticalPhase(initIsm):
 
         for ialt in range(sgm_toa.shape[0]):
             for iact in range(sgm_toa.shape[1]):
-                sum (sgm_toa[ialt,iact,:] * interp_isrf)
+                cs = interp1d(sgm_wv, sgm_toa[ialt, iact, :], fill_value=(0, 0), bounds_error=False)
+                sgm_inter = cs(wv_isrf)
+                # multiply it the sgm_inter by normalized isrf then sum up and assign  to output pixel
+
 
         # sum pf normalized isrf is 1
 
-        toa = np.zeros((sgm_toa.shape[0], sgm_toa.shape[1]))
+
         return toa
 
 
