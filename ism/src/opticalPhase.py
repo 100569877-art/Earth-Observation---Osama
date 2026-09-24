@@ -60,6 +60,7 @@ class opticalPhase(initIsm):
                                 self.outdir, band)
 
         # Apply system MTF
+        # THIS IS SESSION 3 WORK
         toa = self.applySysMtf(toa, Hsys) # always calculated
         self.logger.debug("TOA [0,0] " +str(toa[0,0]) + " [e-]")
 
@@ -123,6 +124,7 @@ class opticalPhase(initIsm):
         toa = np.zeroes((sgm_toa.shape[0], sgm_toa.shape[1]))
 
         #1. normalize ISRF
+        # TO DO LATER CHECK CORRECT CODE
         isrf = isrf/np.sum(isrf)
 
         # Creating interpolant of the ISRF interpolate ISRF to the SGM wavelengths
