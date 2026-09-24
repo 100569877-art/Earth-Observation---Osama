@@ -116,17 +116,18 @@ class opticalPhase(initIsm):
         """
         # TODO how to normalize isrf ?, area of isrf needs to be one
 
-        wv_isrf = wv_isrf * 1000
         isrf, wv_isrf = readIsrf(self.auxdir + '/' + self.ismConfig.isrffile, band)
+        wv_isrf = wv_isrf * 1000
+
         # 0 init output
         toa = np.zeroes((sgm_toa.shape[0], sgm_toa.shape[1]))
 
         #1. normalize ISRF
-        isrf
+        isrf = isrf/np.sum(isrf)
 
         # Creating interpolant of the ISRF interpolate ISRF to the SGM wavelengths
-        cs = interp1d(wv_isrf, isrf, fill_value=(0, 0), bounds_error=False)
-        interp_isrf = cs(sgm_wv)  #1D vector
+        # cs = interp1d(wv_isrf, isrf, fill_value=(0, 0), bounds_error=False)
+        # interp_isrf = cs(sgm_wv)  #1D vector
 
         for ialt in range(sgm_toa.shape[0]):
             for iact in range(sgm_toa.shape[1]):
@@ -134,8 +135,8 @@ class opticalPhase(initIsm):
                 sgm_inter = cs(wv_isrf)
                 # multiply it the sgm_inter by normalized isrf then sum up and assign  to output pixel
 
+                toa[ialt, iact] = np.sum(sgm_inter )
 
-        # sum pf normalized isrf is 1
 
 
         return toa
