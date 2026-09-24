@@ -1,4 +1,7 @@
 from math import pi
+
+from numpy.ma.core import arccos
+
 from config.ismConfig import ismConfig
 import numpy as np
 import math
@@ -102,10 +105,10 @@ class mtf:
         [fAltxx, fActxx] = np.meshgrid(fAlt, fAct,indexing='ij')  # Please use ‘ij’ indexing or you will get the transpose
         f2D = np.sqrt(fAltxx * fAltxx + fActxx * fActxx)
 
-        fc=D/lambda*focal
+        fc=(D/(lambd*focal))
         fn2D= f2D/(1/w)
-        fr2D= f2D(fc)
-        fnAct= fAcT/(1/w)
+        fr2D= f2D/(fc)
+        fnAct= fAct/(1/w)
         fnAlt= fAlt/(1/w)
 
         # TO DO : compare with output file (fr2D) somewhere in the files of eodp
@@ -118,6 +121,9 @@ class mtf:
         :return: diffraction MTF
         """
         #TODO
+
+        mtfDiffract = (2/pi)(arccos(fr2D)-(fr2D)(1-(fr2D)^2)^0.5)
+        # there are 2 other mtf equations too
         return Hdiff
 
 
