@@ -122,8 +122,8 @@ class mtf:
         """
         #TODO
 
-        mtfDiffract = (2/pi)(arccos(fr2D)-(fr2D)(1-(fr2D)^2)^0.5)
-        # there are 2 other mtf equations too
+        Hdiff = (2/pi)(arccos(fr2D)-(fr2D)(1-(fr2D)^2)^0.5)
+
         return Hdiff
 
 
@@ -137,6 +137,11 @@ class mtf:
         :return: Defocus MTF
         """
         #TODO
+
+        x= pi*defocus*fr2D(1-fr2D)
+        Hdefoc= ((2*j1(x))/x)
+
+
         return Hdefoc
 
     def mtfWfeAberrations(self, fr2D, lambd, kLF, wLF, kHF, wHF):
@@ -160,6 +165,9 @@ class mtf:
         :return: detector MTF
         """
         #TODO
+        
+
+
         return Hdet
 
     def mtfSmearing(self, fnAlt, ncolumns, ksmear):
