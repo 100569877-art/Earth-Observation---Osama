@@ -83,11 +83,11 @@ class l1b(initL1b):
         return toa
 
     def plotL1bToa(self, toa_l1b, outputdir, band):
-        #TODO done
-        saveas_str = self.globalConfig.l1b_toa + band
-        title_str = 'L1B TOA [mW/m2/sr]'
-        plotMat2D(toa_l1b, title_str, 'ACT', 'ALT', outputdir, saveas_str)
-
-        idalt = int(toa_l1b.shape[0] / 2)
-        plotF([], toa_l1b[idalt, :], title_str, 'ACT', 'Radiance [mW/m2/sr]',
-              outputdir, saveas_str + '_alt' + str(idalt))
+        plt.figure()
+        plt.imshow(toa_l1b)
+        plt.colorbar(label='Radiance [mW/m2/sr]')
+        plt.xlabel('ACT')
+        plt.ylabel('ALT')
+        plt.title('L1B TOA ' + band)
+        plt.savefig(os.path.join(outputdir, 'l1b_toa_' + band + '.png'))
+        plt.close()
