@@ -82,12 +82,19 @@ class l1b(initL1b):
 
         return toa
 
-    def plotL1bToa(self, toa_l1b, outputdir, band):
-        plt.figure()
-        plt.imshow(toa_l1b)
-        plt.colorbar(label='Radiance [mW/m2/sr]')
-        plt.xlabel('ACT')
-        plt.ylabel('ALT')
-        plt.title('L1B TOA ' + band)
-        plt.savefig(os.path.join(outputdir, 'l1b_toa_' + band + '.png'))
-        plt.close()
+    idalt = int(toa_l1b.shape[0] / 2)
+
+    plt.figure()
+    plt.plot(toa_l1b[idalt, :], label='TOA L1B')
+
+    plt.title('Equalization and restoration for ' + band)
+    plt.xlabel('ACT pixel [-]')
+    plt.ylabel('TOA [mW/m2/sr]')
+    plt.grid()
+    plt.legend()
+
+    plt.savefig(os.path.join(
+        outputdir,
+        'l1b_toa_' + band + '.png'
+    ))
+    plt.close()
