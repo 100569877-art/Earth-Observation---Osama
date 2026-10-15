@@ -120,7 +120,7 @@ class mtf:
         :param fr2D: 2D relative frequencies (f/fc), where fc is the optics cut-off frequency
         :return: diffraction MTF
         """
-        #TODO
+        #TO DO
 
         Hdiff = (2/pi)(arccos(fr2D)-(fr2D)(1-(fr2D)^2)^0.5)
 
@@ -165,7 +165,7 @@ class mtf:
         :return: detector MTF
         """
         #TODO
-        
+
 
 
         return Hdet
