@@ -107,7 +107,7 @@ class l1c(initL1c):
 
         return lat_l1c, lon_l1c, toa_l1c
 
-
+#blah
 
     def checkSize(self, lat,toa):
         '''
