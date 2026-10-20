@@ -11,3 +11,5 @@ outdir = r"C:\\Users\\Osama\\Desktop\\Earth Observation\\EODP_TER_2021-20260910T
 # Initialise the ISM
 myL1b = l1b(auxdir, indir, outdir)
 myL1b.processModule()
+
+

@@ -67,34 +67,47 @@ class l1b(initL1b):
         toa = (toa - eq_add) / eq_mult
         return toa
 
-    def restoration(self,toa,gain):
+    def restoration(self, toa, gain):
         """
         Absolute Radiometric Gain - restore back to radiances
         :param toa: TOA in DN
         :param gain: gain in [rad/DN]
         :return: TOA in radiances [mW/sr/m2]
         """
-        #TODO
-        # multiply toa by gain and assign to toa
 
         toa = toa * gain
-        self.logger.debug('Sanity check. TOA in radiances after gain application ' + str(toa[1,-1]) + ' [mW/m2/sr]')
+
+        self.logger.debug(
+            'Sanity check. TOA in radiances after gain application '
+            + str(toa[1, -1])
+            + ' [mW/m2/sr]'
+        )
 
         return toa
 
-    idalt = int(toa_l1b.shape[0] / 2)
+    def plotL1bToa(self, toa_l1b, outputdir, band):
 
-    plt.figure()
-    plt.plot(toa_l1b[idalt, :], label='TOA L1B')
+        idalt = int(toa_l1b.shape[0] / 2)
 
-    plt.title('Equalization and restoration for ' + band)
-    plt.xlabel('ACT pixel [-]')
-    plt.ylabel('TOA [mW/m2/sr]')
-    plt.grid()
-    plt.legend()
+        plt.figure()
 
-    plt.savefig(os.path.join(
-        outputdir,
-        'l1b_toa_' + band + '.png'
-    ))
-    plt.close()
+        plt.plot(
+            toa_l1b[idalt, :],
+            label='TOA L1B'
+        )
+
+        plt.title('Equalization and restoration for ' + band)
+        plt.xlabel('ACT pixel [-]')
+        plt.ylabel('TOA [mW/m2/sr]')
+
+        plt.grid()
+        plt.legend()
+
+        plt.savefig(
+            os.path.join(
+                outputdir,
+                'l1b_toa_' + band + '.png'
+            )
+        )
+
+        plt.close()
