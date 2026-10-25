@@ -138,7 +138,7 @@ class opticalPhase(initIsm):
         )
 
         # Normalize ISRF by its integral
-        isrf = isrf / np.trapz(isrf, wv_isrf)
+        isrf = isrf / np.trapezoid(isrf, wv_isrf)
 
         for ialt in range(sgm_toa.shape[0]):
 
@@ -152,7 +152,7 @@ class opticalPhase(initIsm):
 
                 sgm_inter = cs(wv_isrf)
 
-                toa[ialt, iact] = np.trapz(
+                toa[ialt, iact] = np.trapezoid(
                     sgm_inter * isrf,
                     wv_isrf
                 )
