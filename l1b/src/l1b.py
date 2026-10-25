@@ -40,7 +40,6 @@ class l1b(initL1b):
                     "EODP-ALG-L1B-1010: Radiometric Correction (equalization)"
                 )
 
-                # Read multiplicative and additive equalization factors
                 eq_mult = readFactor(
                     os.path.join(
                         self.auxdir,
@@ -57,14 +56,12 @@ class l1b(initL1b):
                     EQ_ADD
                 )
 
-                # Equalization
                 toa = self.equalization(
                     toa,
                     eq_add,
                     eq_mult
                 )
 
-                # Save equalized DN output
                 writeToa(
                     self.outdir,
                     self.globalConfig.l1b_toa_eq + band,
@@ -124,7 +121,7 @@ class l1b(initL1b):
                 gain
             )
 
-            # Target ISRF radiance
+            # Target ISRF
             toa_target = readToa(
                 self.indir,
                 self.globalConfig.ism_toa_isrf + band + '.nc'
@@ -138,14 +135,7 @@ class l1b(initL1b):
                 toa
             )
 
-            # Original single-output plot
-            self.plotL1bToa(
-                toa,
-                self.outdir,
-                band
-            )
-
-            # Combined comparison plot
+            # Only generate the combined comparison plot
             self.plotL1bComparison(
                 toa_target,
                 toa_eq_plot,
@@ -165,6 +155,7 @@ class l1b(initL1b):
     def equalization(self, toa, eq_add, eq_mult):
         """
         Equalization. Apply an offset and a gain.
+
         :param toa: TOA in DN
         :param eq_add: Offset in DN
         :param eq_mult: Gain factor, adimensional
@@ -177,7 +168,8 @@ class l1b(initL1b):
 
     def restoration(self, toa, gain):
         """
-        Absolute Radiometric Gain - restore back to radiances
+        Absolute Radiometric Gain - restore back to radiances.
+
         :param toa: TOA in DN
         :param gain: gain in [rad/DN]
         :return: TOA in radiances [mW/sr/m2]
@@ -192,53 +184,6 @@ class l1b(initL1b):
         )
 
         return toa
-
-    def plotL1bToa(
-            self,
-            toa_l1b,
-            outputdir,
-            band):
-
-        idalt = int(
-            toa_l1b.shape[0] / 2
-        )
-
-        plt.figure()
-
-        plt.plot(
-            toa_l1b[idalt, :],
-            label='TOA L1B'
-        )
-
-        plt.title(
-            'Equalization and restoration for ' + band
-        )
-
-        plt.xlabel(
-            'ACT pixel [-]'
-        )
-
-        plt.ylabel(
-            'TOA [mW/m2/sr]'
-        )
-
-        plt.grid()
-        plt.legend()
-
-        band_clean = str(
-            band
-        ).strip()
-
-        filename = os.path.join(
-            outputdir,
-            f"l1b_toa_{band_clean}.png"
-        )
-
-        plt.savefig(
-            filename
-        )
-
-        plt.close()
 
     def plotL1bComparison(
             self,
@@ -276,7 +221,7 @@ class l1b(initL1b):
         )
 
         plt.title(
-            'L1B equalization and restoration - ' + band
+            'L1B equalization and restoration - ' + str(band)
         )
 
         plt.xlabel(
@@ -290,13 +235,22 @@ class l1b(initL1b):
         plt.grid()
         plt.legend()
 
-        band_clean = str(
-            band
-        ).strip()
+        # Clean band name to avoid invalid filename characters
+        band_clean = ''.join(
+            c for c in str(band)
+            if c.isalnum() or c in ('-', '_')
+        )
 
-        filename = os.path.join(
-            outputdir,
-            f"l1b_comparison_{band_clean}.png"
+        filename = os.path.normpath(
+            os.path.join(
+                outputdir,
+                f"l1b_comparison_{band_clean}.png"
+            )
+        )
+
+        print(
+            "Saving comparison figure to:",
+            repr(filename)
         )
 
         plt.savefig(
