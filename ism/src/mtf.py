@@ -72,13 +72,13 @@ class mtf:
 
         # Calculate the System MTF
         self.logger.debug("Calculation of the Sysmtem MTF by multiplying the different contributors")
-        Hsys = (
-                Hdiff
-                * Hdefoc
-                * Hwfe
-                * Hdet
-                * Hsmear
-                * Hmotion
+        Hsys = np.abs(
+            Hdiff
+            * Hdefoc
+            * Hwfe
+            * Hdet
+            * Hsmear
+            * Hmotion
         )
 
         # Plot cuts ACT/ALT of the MTF
@@ -143,8 +143,8 @@ class mtf:
 
         nonzero = x != 0
 
-        Hdefoc[nonzero] = (
-                2.0 * j1(x[nonzero]) / x[nonzero]
+        Hdefoc[nonzero] = np.abs(
+            2.0 * j1(x[nonzero]) / x[nonzero]
         )
 
         return Hdefoc
