@@ -100,18 +100,19 @@ class opticalPhase(initIsm):
         return toa
 
     def applySysMtf(self, toa, Hsys):
-        """
-        Application of the system MTF to the TOA
-        """
 
-        toa_ft = fftshift(fft2(toa))
+        toa_ft = np.fft.fftshift(
+            np.fft.fft2(toa)
+        )
 
         toa_ft = toa_ft * Hsys
 
+        toa_filtered = np.fft.ifft2(
+            np.fft.ifftshift(toa_ft)
+        )
+
         toa_filtered = np.real(
-            ifft2(
-                fftshift(toa_ft)
-            )
+            toa_filtered
         )
 
         return toa_filtered
