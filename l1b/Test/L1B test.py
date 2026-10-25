@@ -1,128 +1,470 @@
-# CROSS VALIDATE L1B OUTPUTS EQUALIZED
+# ============================================================
+# L1B NUMERICAL TEST
+#
+# Compare:
+#   1. Truth ISRF
+#   2. Equalized + restored L1B
+#   3. Non-equalized + restored L1B
+#
+# The objective is to verify numerically that radiometric
+# equalization improves the reconstructed signal.
+# ============================================================
 
-# PLOT FROM YOUR OUTPUTS THE EQUALISED OUTPUT VERSUS NOT EQUALISED VERSUS THE TRUTH
-# TRUTH = EODP-TS-L1B\input\ism_toa_isrf_VNIR-0.nc
-
-# TO DO : Generate script that iterates and compares output files with each other ( Outputs-Output equalized-Output not equalized)
-# EXPLAIN THE PLOT FIGURE 8_3 IN THE THEORY PDF , WHY BLACK LINE IS NOT BLUE LINE , THAT IS IN THE DELIVERABLE REPORT
-
-# EXPLANATION GUIDELINE : AN INSTRUMENT IS A THING THAT RECORDS ENERGY , IN OUR CASE WE HAVE MLI MULTIBAND IMAGER , INCOMING LIGHT IN TELESPCPOE GETS THROUGH MIRRORS REACHES DETECTOR , WE ARE ACQUIRING INFO IN PARTS OF THE SPECTRUM , RECORDING INFO ,
-# AND THEN WE HAVE THE DETECTION SYSTEM WHICH DIGITIZES AND RECORDS , OUR SYS IS NOT PERFECT , WE HAVE NO PERFECT FILTER , THERE ARE NOISES ,  IN ORDER TO UNDERSTAND HOW SYS BEHAVES WE CALIBRATE PERIODICALLY , BLUE LINE IS THE ACTUAL ENERGY THAT ARRIVES TO INSTRUMENT .
-# IT IS THE TRUTH ^ . THE RED LINE IS THE ACTUAL OUTPUT IF YOU DO NOT CALIBRATE IMAGE , BLACK LINE IS THE RESPONSE IF YOU CALIBRATED OUTPUT. WE TRY TO GET AS CLOSE AS POSSIBLE TO TRUTH BUT THERE IS SLIGHT DELTA DIFFERENCE , IT DECLARES HOW MUCH SYS NOISE WE HAVE
-
-
-# Example code : still not tested or even filled in.
-import xarray as xr
+import os
 import numpy as np
-import matplotlib.pyplot as plt
+import xarray as xr
 
 
 # ============================================================
-# 1. FILE PATHS
+# 1. PATHS
 # ============================================================
 
-truth_file = r"C:\Users\Osama\Desktop\Earth Observation\EODP_TER_2021-20260910T154749Z-1-001\EODP_TER_2021\EODP-TS-L1B\input\ism_toa_isrf_VNIR-0.nc"
+# L1B test input:
+# contains ism_toa_VNIR-X.nc and ism_toa_isrf_VNIR-X.nc
+input_dir = (
+    r"C:\Users\Osama\Desktop\Earth Observation"
+    r"\EODP_TER_2021-20260910T154749Z-1-001"
+    r"\EODP_TER_2021"
+    r"\EODP-TS-L1B"
+    r"\input"
+)
 
-equalized_file = r"C:\Users\Osama\Desktop\Earth Observation\EODP_TER_2021-20260910T154749Z-1-001\EODP_TER_2021\EODP-TS-L1B\output\l1b_toa_eq_VNIR-0.nc"
-
-not_equalized_file = r"C:\Users\Osama\Desktop\Earth Observation\EODP_TER_2021-20260910T154749Z-1-001\EODP_TER_2021\EODP-TS-L1B\output\l1b_toa_VNIR-0.nc"
-
-
-# ============================================================
-# 2. LOAD THE NETCDF FILES
-# ============================================================
-
-truth = xr.open_dataset(truth_file)
-equalized = xr.open_dataset(equalized_file)
-not_equalized = xr.open_dataset(not_equalized_file)
-
-
-# ============================================================
-# 3. SEE WHAT IS INSIDE THE FILES
-# ============================================================
-
-print("TRUTH:")
-print(truth)
-
-print("\nEQUALIZED:")
-print(equalized)
-
-print("\nNOT EQUALIZED:")
-print(not_equalized)
+# Equalization auxiliary files
+eq_dir = (
+    r"C:\Users\Osama\Documents\GitHub"
+    r"\Earth Observation - Osama"
+    r"\auxiliary"
+    r"\equalization"
+)
 
 
 # ============================================================
-# 4. SELECT THE VARIABLE YOU WANT TO COMPARE
-# ============================================================
-# Replace "VARIABLE_NAME" with the actual variable name.
-
-variable = "VARIABLE_NAME"
-
-truth_data = truth[variable].values
-equalized_data = equalized[variable].values
-not_equalized_data = not_equalized[variable].values
-
-
-# ============================================================
-# 5. NUMERICAL COMPARISON
+# 2. BANDS
 # ============================================================
 
-# Difference from truth
-error_equalized = equalized_data - truth_data
-error_not_equalized = not_equalized_data - truth_data
-
-# MAE
-mae_equalized = np.mean(np.abs(error_equalized))
-mae_not_equalized = np.mean(np.abs(error_not_equalized))
-
-# RMSE
-rmse_equalized = np.sqrt(np.mean(error_equalized**2))
-rmse_not_equalized = np.sqrt(np.mean(error_not_equalized**2))
-
-# Correlation
-corr_equalized = np.corrcoef(
-    truth_data.flatten(),
-    equalized_data.flatten()
-)[0, 1]
-
-corr_not_equalized = np.corrcoef(
-    truth_data.flatten(),
-    not_equalized_data.flatten()
-)[0, 1]
+bands = [
+    "VNIR-0",
+    "VNIR-1",
+    "VNIR-2",
+    "VNIR-3"
+]
 
 
 # ============================================================
-# 6. PRINT RESULTS
+# 3. ABSOLUTE RADIOMETRIC GAINS
+#
+# From config/l1bConfig.py
 # ============================================================
 
-print("\n================ RESULTS ================")
-
-print("\nEQUALIZED vs TRUTH")
-print("MAE  :", mae_equalized)
-print("RMSE :", rmse_equalized)
-print("Correlation :", corr_equalized)
-
-print("\nNOT EQUALIZED vs TRUTH")
-print("MAE  :", mae_not_equalized)
-print("RMSE :", rmse_not_equalized)
-print("Correlation :", corr_not_equalized)
+gains = {
+    "VNIR-0": 0.09209303,
+    "VNIR-1": 0.06787323,
+    "VNIR-2": 0.052162305,
+    "VNIR-3": 0.047756273
+}
 
 
 # ============================================================
-# 7. PLOT
+# 4. NETCDF READING FUNCTION
 # ============================================================
 
-plt.figure(figsize=(10, 6))
+def read_nc(filename):
+    """
+    Read the main numerical variable from a NetCDF file.
 
-plt.plot(truth_data.flatten(), label="Truth")
-plt.plot(equalized_data.flatten(), label="Equalized")
-plt.plot(not_equalized_data.flatten(), label="Not equalized")
+    This avoids having to manually specify the variable name.
+    """
 
-plt.xlabel("Sample")
-plt.ylabel(variable)
-plt.title("Equalized vs Not Equalized vs Truth")
+    ds = xr.open_dataset(filename)
 
-plt.legend()
-plt.grid()
-plt.tight_layout()
-plt.show()
+    try:
+
+        if len(ds.data_vars) == 0:
+            raise ValueError(
+                "No data variable found in " + filename
+            )
+
+        # Take first numerical data variable
+        variable_name = list(ds.data_vars)[0]
+
+        data = np.asarray(
+            ds[variable_name].values,
+            dtype=float
+        )
+
+    finally:
+        ds.close()
+
+    return data
+
+
+# ============================================================
+# 5. NUMERICAL METRICS
+# ============================================================
+
+def calculate_metrics(reference, test):
+    """
+    Calculate numerical differences between two matrices.
+    """
+
+    error = test - reference
+
+    mae = np.mean(
+        np.abs(error)
+    )
+
+    rmse = np.sqrt(
+        np.mean(error ** 2)
+    )
+
+    max_abs_error = np.max(
+        np.abs(error)
+    )
+
+    # Relative difference only where reference is not ~zero
+    valid = np.abs(reference) > 1e-12
+
+    if np.any(valid):
+
+        relative_error = (
+            np.abs(error[valid])
+            / np.abs(reference[valid])
+        ) * 100.0
+
+        mean_relative = np.mean(
+            relative_error
+        )
+
+        max_relative = np.max(
+            relative_error
+        )
+
+    else:
+
+        mean_relative = np.nan
+        max_relative = np.nan
+
+    # Correlation
+    ref_flat = reference.flatten()
+    test_flat = test.flatten()
+
+    correlation = np.corrcoef(
+        ref_flat,
+        test_flat
+    )[0, 1]
+
+    return {
+        "MAE": mae,
+        "RMSE": rmse,
+        "MAX_ABS": max_abs_error,
+        "MEAN_REL": mean_relative,
+        "MAX_REL": max_relative,
+        "CORR": correlation
+    }
+
+
+# ============================================================
+# 6. RUN TEST FOR ALL FOUR BANDS
+# ============================================================
+
+print()
+print("=" * 80)
+print("L1B NUMERICAL CALIBRATION TEST")
+print("=" * 80)
+
+summary = []
+
+
+for band in bands:
+
+    print()
+    print("-" * 80)
+    print("BAND:", band)
+    print("-" * 80)
+
+    # --------------------------------------------------------
+    # File names
+    # --------------------------------------------------------
+
+    dn_file = os.path.join(
+        input_dir,
+        "ism_toa_" + band + ".nc"
+    )
+
+    truth_file = os.path.join(
+        input_dir,
+        "ism_toa_isrf_" + band + ".nc"
+    )
+
+    eq_mult_file = os.path.join(
+        eq_dir,
+        "eq_mult_" + band + ".nc"
+    )
+
+    eq_add_file = os.path.join(
+        eq_dir,
+        "eq_add_" + band + ".nc"
+    )
+
+    # --------------------------------------------------------
+    # Read data
+    # --------------------------------------------------------
+
+    dn = read_nc(
+        dn_file
+    )
+
+    truth = read_nc(
+        truth_file
+    )
+
+    eq_mult = read_nc(
+        eq_mult_file
+    )
+
+    eq_add = read_nc(
+        eq_add_file
+    )
+
+    gain = gains[band]
+
+    # --------------------------------------------------------
+    # Check dimensions
+    # --------------------------------------------------------
+
+    if dn.shape != truth.shape:
+
+        raise ValueError(
+            band
+            + ": DN and truth matrices have different sizes: "
+            + str(dn.shape)
+            + " != "
+            + str(truth.shape)
+        )
+
+    # --------------------------------------------------------
+    # NON-EQUALIZED L1B
+    #
+    # Absolute radiometric restoration only
+    # --------------------------------------------------------
+
+    toa_noneq = (
+        dn
+        * gain
+    )
+
+    # --------------------------------------------------------
+    # EQUALIZED L1B
+    #
+    # Equalization:
+    #       DN_eq = (DN - ADD) / MULT
+    #
+    # Restoration:
+    #       Radiance = DN_eq * gain
+    # --------------------------------------------------------
+
+    toa_eq_dn = (
+        dn
+        - eq_add
+    ) / eq_mult
+
+    toa_eq = (
+        toa_eq_dn
+        * gain
+    )
+
+    # --------------------------------------------------------
+    # Calculate numerical metrics
+    # --------------------------------------------------------
+
+    metrics_eq = calculate_metrics(
+        truth,
+        toa_eq
+    )
+
+    metrics_noneq = calculate_metrics(
+        truth,
+        toa_noneq
+    )
+
+    # --------------------------------------------------------
+    # Numerical calibration assessment
+    # --------------------------------------------------------
+
+    if metrics_eq["RMSE"] <= metrics_noneq["RMSE"]:
+
+        status = "PASS"
+
+    else:
+
+        status = "FAIL"
+
+    # Improvement in RMSE
+    if metrics_noneq["RMSE"] != 0:
+
+        improvement = (
+            (
+                metrics_noneq["RMSE"]
+                - metrics_eq["RMSE"]
+            )
+            / metrics_noneq["RMSE"]
+        ) * 100.0
+
+    else:
+
+        improvement = 0.0
+
+    # --------------------------------------------------------
+    # Print results
+    # --------------------------------------------------------
+
+    print()
+    print("EQUALIZED vs TRUTH")
+    print(
+        "MAE                  :",
+        metrics_eq["MAE"]
+    )
+    print(
+        "RMSE                 :",
+        metrics_eq["RMSE"]
+    )
+    print(
+        "Maximum absolute err :",
+        metrics_eq["MAX_ABS"]
+    )
+    print(
+        "Mean relative err [%]:",
+        metrics_eq["MEAN_REL"]
+    )
+    print(
+        "Max relative err  [%]:",
+        metrics_eq["MAX_REL"]
+    )
+    print(
+        "Correlation           :",
+        metrics_eq["CORR"]
+    )
+
+    print()
+
+    print("NON-EQUALIZED vs TRUTH")
+    print(
+        "MAE                  :",
+        metrics_noneq["MAE"]
+    )
+    print(
+        "RMSE                 :",
+        metrics_noneq["RMSE"]
+    )
+    print(
+        "Maximum absolute err :",
+        metrics_noneq["MAX_ABS"]
+    )
+    print(
+        "Mean relative err [%]:",
+        metrics_noneq["MEAN_REL"]
+    )
+    print(
+        "Max relative err  [%]:",
+        metrics_noneq["MAX_REL"]
+    )
+    print(
+        "Correlation           :",
+        metrics_noneq["CORR"]
+    )
+
+    print()
+    print(
+        "RMSE improvement [%] :",
+        improvement
+    )
+
+    print(
+        "Calibration test     :",
+        status
+    )
+
+    summary.append(
+        {
+            "band": band,
+            "rmse_eq": metrics_eq["RMSE"],
+            "rmse_noneq": metrics_noneq["RMSE"],
+            "improvement": improvement,
+            "status": status
+        }
+    )
+
+
+# ============================================================
+# 7. FINAL SUMMARY
+# ============================================================
+
+print()
+print()
+print("=" * 80)
+print("L1B CALIBRATION SUMMARY")
+print("=" * 80)
+
+print(
+    "{:<10} {:>15} {:>15} {:>15} {:>10}".format(
+        "Band",
+        "RMSE EQ",
+        "RMSE NO-EQ",
+        "Improvement %",
+        "Status"
+    )
+)
+
+print("-" * 80)
+
+
+for result in summary:
+
+    print(
+        "{:<10} {:>15.6f} {:>15.6f} {:>15.6f} {:>10}".format(
+            result["band"],
+            result["rmse_eq"],
+            result["rmse_noneq"],
+            result["improvement"],
+            result["status"]
+        )
+    )
+
+
+print("=" * 80)
+
+
+# ============================================================
+# 8. GLOBAL RESULT
+# ============================================================
+
+all_pass = all(
+    result["status"] == "PASS"
+    for result in summary
+)
+
+print()
+
+if all_pass:
+
+    print(
+        "FINAL L1B CALIBRATION RESULT: PASS"
+    )
+
+    print(
+        "Equalization reduces the RMSE with respect "
+        "to the ISRF truth for all four VNIR bands."
+    )
+
+else:
+
+    print(
+        "FINAL L1B CALIBRATION RESULT: CHECK RESULTS"
+    )
+
+    print(
+        "Equalization did not reduce the RMSE "
+        "for at least one VNIR band."
+    )
+
+print()
