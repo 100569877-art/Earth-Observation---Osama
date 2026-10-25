@@ -5,8 +5,8 @@ import h5py
 
 TOLERANCE_PERCENT = 1e-3
 
-REFERENCE_ISM = r'C:\PATH\TO\REFERENCE\ism_out'
-REFERENCE_L1B = r'C:\PATH\TO\REFERENCE\l1b_out'
+REFERENCE_ISM = r'C:\Users\Osama\Desktop\Earth Observation\EODP-TS-E2E-20260910T154747Z-1-001\EODP-TS-E2E\ism_out'
+REFERENCE_L1B = r'C:\Users\Osama\Desktop\Earth Observation\EODP-TS-E2E-20260910T154747Z-1-001\EODP-TS-E2E\l1b_out'
 
 TEST_ISM = r'C:\Users\Osama\Desktop\EODP_E2E_RUN\ism_out'
 TEST_L1B = r'C:\Users\Osama\Desktop\EODP_E2E_RUN\l1b_out'
@@ -294,5 +294,6 @@ else:
 
     print(
         'FINAL E2E RESULT: FAIL'
+    )
 
-print('=' * 100)
+print('=' * 90)

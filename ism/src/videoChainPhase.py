@@ -53,10 +53,20 @@ class videoChainPhase(initIsm):
     def digitisation(self, toa, bit_depth, min_voltage, max_voltage):
         max_dn = 2 ** bit_depth - 1
 
+        scaled = (
+                toa
+                / (max_voltage - min_voltage)
+                * max_dn
+        )
+
+        print(
+            "ADC scaled min/max:",
+            np.min(scaled),
+            np.max(scaled)
+        )
+
         toa_dn = np.round(
-            toa
-            / (max_voltage - min_voltage)
-            * max_dn
+            scaled
         )
 
         toa_dn = np.clip(
