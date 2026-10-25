@@ -34,18 +34,11 @@ def compare_arrays(reference, test):
             'max_abs': np.nan,
             'max_rel_percent': np.nan,
             'mean_rel_percent': np.nan,
-            'different_pixels': np.nan,
-            'different_percent': np.nan,
-            'plus_one': np.nan,
-            'minus_one': np.nan,
-            'mismatch_indices': [],
             'pass': False
         }
 
-    signed_diff = test - reference
-
     abs_diff = np.abs(
-        signed_diff
+        test - reference
     )
 
     rel_diff = np.zeros_like(
@@ -53,9 +46,7 @@ def compare_arrays(reference, test):
         dtype=np.float64
     )
 
-    non_zero = (
-        np.abs(reference) > 0
-    )
+    non_zero = np.abs(reference) > 0
 
     rel_diff[non_zero] = (
         abs_diff[non_zero]
@@ -92,30 +83,6 @@ def compare_arrays(reference, test):
 
         mean_rel_percent = np.inf
 
-    different_pixels = np.count_nonzero(
-        abs_diff
-    )
-
-    total_pixels = reference.size
-
-    different_percent = (
-        different_pixels
-        / total_pixels
-        * 100.0
-    )
-
-    plus_one = np.count_nonzero(
-        signed_diff == 1
-    )
-
-    minus_one = np.count_nonzero(
-        signed_diff == -1
-    )
-
-    mismatch_indices = np.argwhere(
-        signed_diff != 0
-    )
-
     passed = (
         max_rel_percent
         < TOLERANCE_PERCENT
@@ -126,11 +93,6 @@ def compare_arrays(reference, test):
         'max_abs': max_abs,
         'max_rel_percent': max_rel_percent,
         'mean_rel_percent': mean_rel_percent,
-        'different_pixels': different_pixels,
-        'different_percent': different_percent,
-        'plus_one': plus_one,
-        'minus_one': minus_one,
-        'mismatch_indices': mismatch_indices,
         'pass': passed
     }
 
@@ -142,20 +104,19 @@ def run_test(
         filename_prefix):
 
     print()
-    print('=' * 110)
+    print('=' * 90)
     print(module_name + ' CROSS-VALIDATION')
-    print('=' * 110)
+    print('=' * 90)
 
     print(
         f"{'Band':<10}"
         f"{'Max Abs Diff':<20}"
         f"{'Max Rel Diff [%]':<22}"
         f"{'Mean Rel Diff [%]':<22}"
-        f"{'Different Pixels':<20}"
         f"{'Result':<10}"
     )
 
-    print('-' * 110)
+    print('-' * 90)
 
     module_pass = True
 
@@ -181,7 +142,7 @@ def run_test(
 
             print(
                 f"{band:<10}"
-                f"{'REFERENCE FILE MISSING':<90}"
+                f"{'REFERENCE FILE MISSING':<64}"
                 f"{'FAIL':<10}"
             )
 
@@ -192,7 +153,7 @@ def run_test(
 
             print(
                 f"{band:<10}"
-                f"{'TEST FILE MISSING':<90}"
+                f"{'TEST FILE MISSING':<64}"
                 f"{'FAIL':<10}"
             )
 
@@ -216,7 +177,7 @@ def run_test(
 
             print(
                 f"{band:<10}"
-                f"{'SHAPE MISMATCH':<90}"
+                f"{'SHAPE MISMATCH':<64}"
                 f"{'FAIL':<10}"
             )
 
@@ -237,41 +198,10 @@ def run_test(
             f"{result['max_abs']:<20.10e}"
             f"{result['max_rel_percent']:<22.10e}"
             f"{result['mean_rel_percent']:<22.10e}"
-            f"{result['different_pixels']:<20}"
             f"{status:<10}"
         )
 
-        print(
-            f"           Different pixels: "
-            f"{result['different_pixels']} / "
-            f"{reference.size} "
-            f"({result['different_percent']:.8f} %)"
-        )
-
-        print(
-            f"           +1: {result['plus_one']}    "
-            f"-1: {result['minus_one']}"
-        )
-
-        if len(result['mismatch_indices']) > 0:
-
-            print(
-                "           First mismatching pixels:"
-            )
-
-            for idx in result['mismatch_indices'][:5]:
-
-                row = idx[0]
-                col = idx[1]
-
-                print(
-                    f"           [{row},{col}] "
-                    f"reference={reference[row, col]} "
-                    f"test={test[row, col]} "
-                    f"diff={test[row, col] - reference[row, col]}"
-                )
-
-    print('-' * 110)
+    print('-' * 90)
 
     print(
         module_name,
@@ -311,7 +241,7 @@ l1b_pass = run_test(
 )
 
 print()
-print('=' * 110)
+print('=' * 90)
 
 if ism_pass and l1b_pass:
 
@@ -324,4 +254,5 @@ else:
     print(
         'FINAL E2E RESULT: FAIL'
     )
-print('=' * 110)
+
+print('=' * 90)
