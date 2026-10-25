@@ -72,7 +72,7 @@ class mtf:
 
         # Calculate the System MTF
         self.logger.debug("Calculation of the Sysmtem MTF by multiplying the different contributors")
-        Hsys = 1 # dummy
+        Hsys = Hdiff * Hdefoc * Hwfe * Hdet * Hsmear * Hmotion
 
         # Plot cuts ACT/ALT of the MTF
         self.plotMtf(Hdiff, Hdefoc, Hwfe, Hdet, Hsmear, Hmotion, Hsys, nlines, ncolumns, fnAct, fnAlt, directory, band)
@@ -197,7 +197,8 @@ class mtf:
         :param kmotion: Amplitude of high-frequency component for the motion smear MTF in ALT and ACT
         :return: detector MTF
         """
-        #TODO
+        Hmotion = np.sinc(kmotion * fn2D)
+
         return Hmotion
 
     def plotMtf(self,Hdiff, Hdefoc, Hwfe, Hdet, Hsmear, Hmotion, Hsys, nlines, ncolumns, fnAct, fnAlt, directory, band):
@@ -218,6 +219,54 @@ class mtf:
         :param band: band
         :return: N/A
         """
-        #TODO
+        # Central cuts
+        idalt = int(nlines / 2)
+        idact = int(ncolumns / 2)
+
+        # ACT plot
+        plt.figure()
+
+        plt.plot(fnAct, Hdiff[idalt, :], label='Diffraction')
+        plt.plot(fnAct, Hdefoc[idalt, :], label='Defocus')
+        plt.plot(fnAct, Hwfe[idalt, :], label='WFE')
+        plt.plot(fnAct, Hdet[idalt, :], label='Detector')
+        plt.plot(fnAct, Hsmear[idalt, :], label='Smearing')
+        plt.plot(fnAct, Hmotion[idalt, :], label='Motion blur')
+        plt.plot(fnAct, Hsys[idalt, :], label='System', linewidth=2)
+
+        plt.xlabel('Normalised spatial frequency ACT [-]')
+        plt.ylabel('MTF [-]')
+        plt.title('System MTF ACT - ' + band)
+
+        plt.grid()
+        plt.legend()
+
+        plt.savefig(
+            os.path.join(directory, 'MTF_ACT_' + band + '.png')
+        )
+
+        plt.close()
+
+        # ALT plot
+        plt.figure()
+
+        plt.plot(fnAlt, Hdiff[:, idact], label='Diffraction')
+        plt.plot(fnAlt, Hdefoc[:, idact], label='Defocus')
+        plt.plot(fnAlt, Hwfe[:, idact], label='WFE')
+        plt.plot(fnAlt, Hdet[:, idact], label='Detector')
+        plt.plot(fnAlt, Hsmear[:, idact], label='Smearing')
+        plt.plot(fnAlt, Hmotion[:, idact], label='Motion blur')
+        plt.plot(fnAlt, Hsys[:, idact], label='System', linewidth=2)
+
+        plt.xlabel('Normalised spatial frequency ALT [-]')
+        plt.ylabel('MTF [-]')
+        plt.title('System MTF ALT - ' + band)
+
+        plt.grid()
+        plt.legend()
+
+        plt.savefig(
+            os.path.join(directory, 'MTF_ALT_' + band + '.png')
+        )
 
 
