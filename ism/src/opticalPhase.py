@@ -87,27 +87,27 @@ class opticalPhase(initIsm):
     def rad2Irrad(self, toa, D, f, Tr):
         """
         Radiance to Irradiance conversion
+        :param toa: Input TOA image in radiances [mW/sr/m2]
+        :param D: Pupil diameter [m]
+        :param f: Focal length [m]
+        :param Tr: Optical transmittance [-]
+        :return: TOA image in irradiances [mW/m2]
         """
 
         factor = Tr * (pi / 4.0) * (D / f) ** 2
-
         toa = toa * factor
 
         return toa
 
-
     def applySysMtf(self, toa, Hsys):
         """
         Application of the system MTF to the TOA
-        :param toa: Input TOA image in irradiances [mW/m2]
-        :param Hsys: System MTF
-        :return: TOA image in irradiances [mW/m2]
         """
 
         toa_ft = fftshift(fft2(toa))
 
         toa_ft = toa_ft * Hsys
-        
+
         toa_filtered = np.real(
             ifft2(
                 fftshift(toa_ft)
@@ -119,42 +119,43 @@ class opticalPhase(initIsm):
     def spectralIntegration(self, sgm_toa, sgm_wv, band):
         """
         Integration with the ISRF to retrieve one band
-        :param sgm_toa: Spectrally oversampled TOA cube 3D in irradiances [mW/m2]
+        :param sgm_toa: Spectrally oversampled TOA cube
         :param sgm_wv: wavelengths of the input TOA cube
         :param band: band
-        :return: TOA image 2D in radiances [mW/m2]
+        :return: TOA image 2D
         """
 
-            isrf, wv_isrf = readIsrf(
-                self.auxdir + '/' + self.ismConfig.isrffile,
-                band
-            )
+        isrf, wv_isrf = readIsrf(
+            self.auxdir + '/' + self.ismConfig.isrffile,
+            band
+        )
 
+        # Convert ISRF wavelengths from um to nm
+        wv_isrf = wv_isrf * 1000
 
-            wv_isrf = wv_isrf * 1000
+        toa = np.zeros(
+            (sgm_toa.shape[0], sgm_toa.shape[1])
+        )
 
-            toa = np.zeros((sgm_toa.shape[0], sgm_toa.shape[1]))
+        # Normalize ISRF by its integral
+        isrf = isrf / np.trapz(isrf, wv_isrf)
 
-            # Normalizing
-            isrf = isrf / np.trapezoid(isrf, wv_isrf)
+        for ialt in range(sgm_toa.shape[0]):
 
-            for ialt in range(sgm_toa.shape[0]):
-                for iact in range(sgm_toa.shape[1]):
-                    cs = interp1d(
-                        sgm_wv,
-                        sgm_toa[ialt, iact, :],
-                        fill_value=(0, 0),
-                        bounds_error=False
-                    )
+            for iact in range(sgm_toa.shape[1]):
+                cs = interp1d(
+                    sgm_wv,
+                    sgm_toa[ialt, iact, :],
+                    fill_value=(0, 0),
+                    bounds_error=False
+                )
 
-                    sgm_inter = cs(wv_isrf)
+                sgm_inter = cs(wv_isrf)
 
+                toa[ialt, iact] = np.trapz(
+                    sgm_inter * isrf,
+                    wv_isrf
+                )
 
-                    toa[ialt, iact] = np.trapezoid(
-                        sgm_inter * isrf,
-                        wv_isrf
-                    )
-
-            return toa
-
+        return toa
 
