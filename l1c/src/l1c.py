@@ -9,6 +9,7 @@ from scipy.interpolate import bisplrep, bisplev
 import matplotlib.pyplot as plt
 from common.io.l1cProduct import writeL1c
 from matplotlib import cm
+import os
 
 
 class l1c(initL1c):
@@ -48,6 +49,25 @@ class l1c(initL1c):
                 toa,
                 band
             )
+
+            # Generate geometry plots only once
+            # Geometry is common to the four radiometric bands
+            # -------------------------------------------------------------------------------
+            if band == self.globalConfig.bands[0]:
+
+                self.plotGsd(
+                    lat,
+                    lon,
+                    self.outdir
+                )
+
+                self.plotFootprint(
+                    lat,
+                    lon,
+                    lat_l1c,
+                    lon_l1c,
+                    self.outdir
+                )
 
             # Write output TOA
             # -------------------------------------------------------------------------------
@@ -107,7 +127,7 @@ class l1c(initL1c):
         m = mgrs.MGRS()
 
         # -------------------------------------------------------------------------------
-        # Generate the unique MGRS cells covered by the L1B image
+        # Generate unique MGRS cells covered by the L1B image
         # -------------------------------------------------------------------------------
         mgrs_tiles = set()
 
@@ -121,13 +141,12 @@ class l1c(initL1c):
                     MGRSPrecision=self.l1cConfig.mgrs_tile_precision
                 )
 
-                # mgrs library may return bytes
                 if isinstance(tile, bytes):
                     tile = tile.decode('utf-8')
 
                 mgrs_tiles.add(tile)
 
-        # Sort tiles so output order is deterministic
+        # Deterministic output ordering
         mgrs_tiles = sorted(mgrs_tiles)
 
         npoints = len(mgrs_tiles)
@@ -138,14 +157,14 @@ class l1c(initL1c):
         )
 
         # -------------------------------------------------------------------------------
-        # Allocate L1C arrays
+        # Allocate output arrays
         # -------------------------------------------------------------------------------
         lat_l1c = np.zeros(npoints)
         lon_l1c = np.zeros(npoints)
         toa_l1c = np.zeros(npoints)
 
         # -------------------------------------------------------------------------------
-        # Convert each MGRS tile back to latitude/longitude and interpolate radiance
+        # Convert MGRS cells back to latitude/longitude and interpolate radiance
         # -------------------------------------------------------------------------------
         for i, tile in enumerate(mgrs_tiles):
 
@@ -164,7 +183,7 @@ class l1c(initL1c):
     def checkSize(self, lat, toa):
         '''
         Check the sizes of the input radiances and geodetic coordinates.
-        If they don't match, exit.
+        If they do not match, exit.
 
         :param lat: Latitude or longitude 2D matrix
         :param toa: Radiance 2D matrix
@@ -179,3 +198,246 @@ class l1c(initL1c):
                 + ' != '
                 + str(lat.shape)
             )
+
+    def distanceGround(self, lat1, lon1, lat2, lon2):
+        '''
+        Ground distance between two geographic coordinates
+        using the haversine formula.
+
+        :return: distance in metres
+        '''
+
+        R = 6371000.0
+
+        lat1 = np.radians(lat1)
+        lon1 = np.radians(lon1)
+        lat2 = np.radians(lat2)
+        lon2 = np.radians(lon2)
+
+        dlat = lat2 - lat1
+        dlon = lon2 - lon1
+
+        a = (
+            np.sin(dlat / 2.0) ** 2
+            + np.cos(lat1)
+            * np.cos(lat2)
+            * np.sin(dlon / 2.0) ** 2
+        )
+
+        c = 2.0 * np.arctan2(
+            np.sqrt(a),
+            np.sqrt(1.0 - a)
+        )
+
+        return R * c
+
+    def plotGsd(self, lat, lon, outputdir):
+        '''
+        Plot L1B and L1C Ground Sampling Distance
+        in across-track and along-track directions.
+        '''
+
+        # -------------------------------------------------------------------------------
+        # L1B ACT GSD
+        # Central ALT row
+        # -------------------------------------------------------------------------------
+        idalt = int(
+            lat.shape[0] / 2
+        )
+
+        gsd_act_l1b = np.zeros(
+            lat.shape[1] - 1
+        )
+
+        for iact in range(
+                lat.shape[1] - 1):
+
+            gsd_act_l1b[iact] = self.distanceGround(
+                lat[idalt, iact],
+                lon[idalt, iact],
+                lat[idalt, iact + 1],
+                lon[idalt, iact + 1]
+            )
+
+        # -------------------------------------------------------------------------------
+        # L1B ALT GSD
+        # Central ACT column
+        # -------------------------------------------------------------------------------
+        idact = int(
+            lat.shape[1] / 2
+        )
+
+        gsd_alt_l1b = np.zeros(
+            lat.shape[0] - 1
+        )
+
+        for ialt in range(
+                lat.shape[0] - 1):
+
+            gsd_alt_l1b[ialt] = self.distanceGround(
+                lat[ialt, idact],
+                lon[ialt, idact],
+                lat[ialt + 1, idact],
+                lon[ialt + 1, idact]
+            )
+
+        # -------------------------------------------------------------------------------
+        # L1C grid
+        # MGRS precision = 3 corresponds to 100 m
+        # -------------------------------------------------------------------------------
+        gsd_act_l1c = np.ones(
+            len(gsd_act_l1b)
+        ) * 100.0
+
+        gsd_alt_l1c = np.ones(
+            len(gsd_alt_l1b)
+        ) * 100.0
+
+        # -------------------------------------------------------------------------------
+        # ACT plot
+        # -------------------------------------------------------------------------------
+        plt.figure()
+
+        plt.plot(
+            gsd_act_l1b,
+            label='L1B'
+        )
+
+        plt.plot(
+            gsd_act_l1c,
+            label='L1C'
+        )
+
+        plt.xlabel(
+            'ACT pixel [-]'
+        )
+
+        plt.ylabel(
+            'GSD [m]'
+        )
+
+        plt.title(
+            'GSD comparison - Across Track'
+        )
+
+        plt.grid()
+        plt.legend()
+
+        filename_act = os.path.join(
+            outputdir,
+            'l1c_gsd_act.png'
+        )
+
+        plt.savefig(
+            filename_act,
+            dpi=200
+        )
+
+        plt.close()
+
+        # -------------------------------------------------------------------------------
+        # ALT plot
+        # -------------------------------------------------------------------------------
+        plt.figure()
+
+        plt.plot(
+            gsd_alt_l1b,
+            label='L1B'
+        )
+
+        plt.plot(
+            gsd_alt_l1c,
+            label='L1C'
+        )
+
+        plt.xlabel(
+            'ALT pixel [-]'
+        )
+
+        plt.ylabel(
+            'GSD [m]'
+        )
+
+        plt.title(
+            'GSD comparison - Along Track'
+        )
+
+        plt.grid()
+        plt.legend()
+
+        filename_alt = os.path.join(
+            outputdir,
+            'l1c_gsd_alt.png'
+        )
+
+        plt.savefig(
+            filename_alt,
+            dpi=200
+        )
+
+        plt.close()
+
+    def plotFootprint(
+            self,
+            lat,
+            lon,
+            lat_l1c,
+            lon_l1c,
+            outputdir):
+        '''
+        Plot the L1B ground footprint together
+        with the L1C MGRS grid points.
+        '''
+
+        lat_corners = getCorners(
+            lat
+        )
+
+        lon_corners = getCorners(
+            lon
+        )
+
+        plt.figure()
+
+        # L1C MGRS grid points
+        plt.scatter(
+            lon_l1c,
+            lat_l1c,
+            s=4,
+            label='L1C MGRS grid'
+        )
+
+        # L1B footprint
+        plt.plot(
+            lon_corners,
+            lat_corners,
+            linewidth=2,
+            label='L1B footprint'
+        )
+
+        plt.xlabel(
+            'Longitude [deg]'
+        )
+
+        plt.ylabel(
+            'Latitude [deg]'
+        )
+
+        plt.title(
+            'L1B footprint and L1C MGRS grid'
+        )
+
+        plt.grid()
+        plt.legend()
+
+        filename = os.path.join(
+            outputdir,
+            'l1c_footprint.png'
+        )
+
+        plt.savefig(
+            filename,
+            dpi=200
+        )
+
+        plt.close()
