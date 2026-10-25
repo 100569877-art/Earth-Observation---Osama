@@ -53,10 +53,10 @@ class videoChainPhase(initIsm):
     def digitisation(self, toa, bit_depth, min_voltage, max_voltage):
         max_dn = 2 ** bit_depth - 1
 
-        toa_dn = (
-                (toa - min_voltage)
-                / (max_voltage - min_voltage)
-                * max_dn
+        toa_dn = np.round(
+            toa
+            / (max_voltage - min_voltage)
+            * max_dn
         )
 
         toa_dn = np.clip(
@@ -65,7 +65,4 @@ class videoChainPhase(initIsm):
             max_dn
         )
 
-        toa_dn = toa_dn.astype(int)
-
         return toa_dn
-
