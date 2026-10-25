@@ -204,11 +204,10 @@ class mtf:
         :param band: band
         :return: N/A
         """
-        # Central cuts
         idalt = int(nlines / 2)
         idact = int(ncolumns / 2)
 
-        # ACT plot
+        # ACT
         plt.figure()
 
         plt.plot(fnAct, Hdiff[idalt, :], label='Diffraction')
@@ -217,9 +216,16 @@ class mtf:
         plt.plot(fnAct, Hdet[idalt, :], label='Detector')
         plt.plot(fnAct, Hsmear[idalt, :], label='Smearing')
         plt.plot(fnAct, Hmotion[idalt, :], label='Motion blur')
-        plt.plot(fnAct, Hsys[idalt, :], label='System', linewidth=2)
+        plt.plot(
+            fnAct,
+            Hsys[idalt, :],
+            label='System',
+            linewidth=2
+        )
 
-        plt.xlabel('Normalised spatial frequency ACT [-]')
+        plt.xlabel(
+            'Normalised spatial frequency ACT [-]'
+        )
         plt.ylabel('MTF [-]')
         plt.title('System MTF ACT - ' + band)
 
@@ -227,12 +233,15 @@ class mtf:
         plt.legend()
 
         plt.savefig(
-            os.path.join(directory, 'MTF_ACT_' + band + '.png')
+            os.path.join(
+                directory,
+                'MTF_ACT_' + band + '.png'
+            )
         )
 
         plt.close()
 
-        # ALT plot
+        # ALT
         plt.figure()
 
         plt.plot(fnAlt, Hdiff[:, idact], label='Diffraction')
@@ -241,9 +250,16 @@ class mtf:
         plt.plot(fnAlt, Hdet[:, idact], label='Detector')
         plt.plot(fnAlt, Hsmear[:, idact], label='Smearing')
         plt.plot(fnAlt, Hmotion[:, idact], label='Motion blur')
-        plt.plot(fnAlt, Hsys[:, idact], label='System', linewidth=2)
+        plt.plot(
+            fnAlt,
+            Hsys[:, idact],
+            label='System',
+            linewidth=2
+        )
 
-        plt.xlabel('Normalised spatial frequency ALT [-]')
+        plt.xlabel(
+            'Normalised spatial frequency ALT [-]'
+        )
         plt.ylabel('MTF [-]')
         plt.title('System MTF ALT - ' + band)
 
@@ -251,7 +267,12 @@ class mtf:
         plt.legend()
 
         plt.savefig(
-            os.path.join(directory, 'MTF_ALT_' + band + '.png')
+            os.path.join(
+                directory,
+                'MTF_ALT_' + band + '.png'
+            )
         )
+
+        plt.close()
 
 

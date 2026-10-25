@@ -94,63 +94,126 @@ class detectionPhase(initIsm):
 
         return toa
 
-
     def irrad2Phot(self, toa, area_pix, tint, wv):
-        """
-        Conversion of the input Irradiances to Photons
-        :param toa: input TOA in irradiances [mW/m2]
-        :param area_pix: Pixel area [m2]
-        :param tint: Integration time [s]
-        :param wv: Central wavelength of the band [m]
-        :return: Toa in photons
-        """
-        #TODO
+
+        h = 6.62606896e-34
+        c = 2.99792458e8
+
+        # Input is mW/m2 -> convert to W/m2
+        toa_w = toa * 1e-3
+
+        # Energy reaching one detector pixel
+        energy_in = toa_w * area_pix * tint
+
+        # Photon energy
+        energy_photon = h * c / wv
+
+        # Number of photons
+        toa_ph = energy_in / energy_photon
+
         return toa_ph
 
     def phot2Electr(self, toa, QE):
-        """
-        Conversion of photons to electrons
-        :param toa: input TOA in photons [ph]
-        :param QE: Quantum efficiency [e-/ph]
-        :return: toa in electrons
-        """
-        #TODO
+
+        toae = toa * QE
+
         return toae
 
-    def badDeadPixels(self, toa,bad_pix,dead_pix,bad_pix_red,dead_pix_red):
-        """
-        Bad and dead pixels simulation
-        :param toa: input toa in [e-]
-        :param bad_pix: Percentage of bad pixels in the CCD [%]
-        :param dead_pix: Percentage of dead pixels in the CCD [%]
-        :param bad_pix_red: Reduction in the quantum efficiency for the bad pixels [-, over 1]
-        :param dead_pix_red: Reduction in the quantum efficiency for the dead pixels [-, over 1]
-        :return: toa in e- including bad & dead pixels
-        """
-        #TODO
+    def badDeadPixels(
+            self, toa,
+            bad_pix, dead_pix,
+            bad_pix_red, dead_pix_red):
+
+        toa_act = toa.shape[1]
+
+        n_bad = int(
+            toa_act * bad_pix / 100.0
+        )
+
+        n_dead = int(
+            toa_act * dead_pix / 100.0
+        )
+
+        if n_bad > 0:
+            step_bad = int(
+                toa_act / n_bad
+            )
+
+            idx_bad = range(
+                5,
+                toa_act,
+                step_bad
+            )
+
+            toa[:, list(idx_bad)] *= (
+                    1.0 - bad_pix_red
+            )
+
+        if n_dead > 0:
+            step_dead = int(
+                toa_act / n_dead
+            )
+
+            idx_dead = range(
+                0,
+                toa_act,
+                step_dead
+            )
+
+            toa[:, list(idx_dead)] *= (
+                    1.0 - dead_pix_red
+            )
+
         return toa
 
     def prnu(self, toa, kprnu):
-        """
-        Adding the PRNU effect
-        :param toa: TOA pre-PRNU [e-]
-        :param kprnu: multiplicative factor to the standard normal deviation for the PRNU
-        :return: TOA after adding PRNU [e-]
-        """
-        #TODO
+
+        ncolumns = toa.shape[1]
+
+        prnu_act = (
+                np.random.normal(
+                    0.0,
+                    1.0,
+                    ncolumns
+                )
+                * kprnu
+        )
+
+        toa = toa * (
+                1.0 + prnu_act[np.newaxis, :]
+        )
+
         return toa
 
+    def darkSignal(
+            self, toa, kdsnu,
+            T, Tref,
+            ds_A_coeff, ds_B_coeff):
 
-    def darkSignal(self, toa, kdsnu, T, Tref, ds_A_coeff, ds_B_coeff):
-        """
-        Dark signal simulation
-        :param toa: TOA in [e-]
-        :param kdsnu: multiplicative factor to the standard normal deviation for the DSNU
-        :param T: Temperature of the system
-        :param Tref: Reference temperature of the system
-        :param ds_A_coeff: Empirical parameter of the model 7.87 e-
-        :param ds_B_coeff: Empirical parameter of the model 6040 K
-        :return: TOA in [e-] with dark signal
-        """
-        #TODO
+        ncolumns = toa.shape[1]
+
+        dsnu = (
+                np.abs(
+                    np.random.normal(
+                        0.0,
+                        1.0,
+                        ncolumns
+                    )
+                )
+                * kdsnu
+        )
+
+        Sd = (
+                ds_A_coeff
+                * (T / Tref) ** 3
+                * np.exp(
+            -ds_B_coeff
+            * (1.0 / T - 1.0 / Tref)
+        )
+        )
+
+        dark_signal = Sd * (1.0 + dsnu)
+
+        toa = toa + dark_signal[np.newaxis, :]
+
         return toa
