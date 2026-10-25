@@ -87,13 +87,12 @@ class opticalPhase(initIsm):
     def rad2Irrad(self, toa, D, f, Tr):
         """
         Radiance to Irradiance conversion
-        :param toa: Input TOA image in radiances [mW/sr/m2]
-        :param D: Pupil diameter [m]
-        :param f: Focal length [m]
-        :param Tr: Optical transmittance [-]
-        :return: TOA image in irradiances [mW/m2]
         """
-        # TODO
+
+        factor = Tr * (pi / 4.0) * (D / f) ** 2
+
+        toa = toa * factor
+
         return toa
 
 
