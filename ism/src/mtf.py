@@ -114,33 +114,38 @@ class mtf:
         # TO DO : compare with output file (fr2D) somewhere in the files of eodp
         return fn2D, fr2D, fnAct, fnAlt
 
-    def mtfDiffract(self,fr2D):
+    def mtfDiffract(self, fr2D):
         """
         Optics Diffraction MTF
-        :param fr2D: 2D relative frequencies (f/fc), where fc is the optics cut-off frequency
-        :return: diffraction MTF
         """
-        #TO DO
 
-        Hdiff = (2/pi)(arccos(fr2D)-(fr2D)(1-(fr2D)^2)^0.5)
+        Hdiff = np.zeros_like(fr2D)
+
+        valid = fr2D <= 1.0
+
+        Hdiff[valid] = (2.0 / pi) * (
+                np.arccos(fr2D[valid])
+                - fr2D[valid] * np.sqrt(1.0 - fr2D[valid] ** 2)
+        )
+
+        Hdiff[fr2D > 1.0] = 0.0
 
         return Hdiff
-
 
     def mtfDefocus(self, fr2D, defocus, focal, D):
         """
         Defocus MTF
-        :param fr2D: 2D relative frequencies (f/fc), where fc is the optics cut-off frequency
-        :param defocus: Defocus coefficient (defocus/(f/N)). 0-2 low defocusing
-        :param focal: focal length [m]
-        :param D: Telescope diameter [m]
-        :return: Defocus MTF
         """
-        #TODO
 
-        x= pi*defocus*fr2D(1-fr2D)
-        Hdefoc= ((2*j1(x))/x)
+        x = pi * defocus * fr2D * (1.0 - fr2D)
 
+        Hdefoc = np.ones_like(x)
+
+        nonzero = x != 0
+
+        Hdefoc[nonzero] = (
+                2.0 * j1(x[nonzero]) / x[nonzero]
+        )
 
         return Hdefoc
 
