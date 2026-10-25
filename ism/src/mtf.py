@@ -152,26 +152,23 @@ class mtf:
     def mtfWfeAberrations(self, fr2D, lambd, kLF, wLF, kHF, wHF):
         """
         Wavefront Error Aberrations MTF
-        :param fr2D: 2D relative frequencies (f/fc), where fc is the optics cut-off frequency
-        :param lambd: central wavelength of the band [m]
-        :param kLF: Empirical coefficient for the aberrations MTF for low-frequency wavefront errors [-]
-        :param wLF: RMS of low-frequency wavefront errors [m]
-        :param kHF: Empirical coefficient for the aberrations MTF for high-frequency wavefront errors [-]
-        :param wHF: RMS of high-frequency wavefront errors [m]
-        :return: WFE Aberrations MTF
         """
-        #TODO
+
+        Hwfe = np.exp(
+            -fr2D * (1.0 - fr2D) * (
+                    kLF * (wLF / lambd) ** 2
+                    + kHF * (wHF / lambd) ** 2
+            )
+        )
+
         return Hwfe
 
-    def mtfDetector(self,fn2D):
+    def mtfDetector(self, fn2D):
         """
         Detector MTF
-        :param fnD: 2D normalised frequencies (f/(1/w))), where w is the pixel width
-        :return: detector MTF
         """
-        #TODO
 
-
+        Hdet = np.abs(np.sinc(fn2D))
 
         return Hdet
 
@@ -183,7 +180,14 @@ class mtf:
         :param ksmear: Amplitude of low-frequency component for the motion smear MTF in ALT [pixels]
         :return: Smearing MTF
         """
-        #TODO
+        Hsmear_1d = np.sinc(ksmear * fnAlt)
+
+        Hsmear = repmat(
+            Hsmear_1d[:, np.newaxis],
+            1,
+            ncolumns
+        )
+
         return Hsmear
 
     def mtfMotion(self, fn2D, kmotion):
