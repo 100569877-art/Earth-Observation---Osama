@@ -5,8 +5,8 @@ import h5py
 
 TOLERANCE_PERCENT = 1e-3
 
-REFERENCE_ISM = r'C:\Users\Osama\Desktop\Earth Observation\EODP-TS-E2E-20260910T154747Z-1-001\EODP-TS-E2E\ism_out'
-REFERENCE_L1B = r'C:\Users\Osama\Desktop\Earth Observation\EODP-TS-E2E-20260910T154747Z-1-001\EODP-TS-E2E\l1b_out'
+REFERENCE_ISM = r'C:\PATH\TO\REFERENCE\ism_out'
+REFERENCE_L1B = r'C:\PATH\TO\REFERENCE\l1b_out'
 
 TEST_ISM = r'C:\Users\Osama\Desktop\EODP_E2E_RUN\ism_out'
 TEST_L1B = r'C:\Users\Osama\Desktop\EODP_E2E_RUN\l1b_out'
@@ -20,6 +20,7 @@ BANDS = [
 
 
 def read_toa(filepath):
+
     with h5py.File(filepath, 'r') as f:
         return np.array(f['toa'])
 
@@ -27,22 +28,29 @@ def read_toa(filepath):
 def compare_arrays(reference, test):
 
     if reference.shape != test.shape:
+
         return {
             'shape_match': False,
             'max_abs': np.nan,
             'max_rel_percent': np.nan,
             'mean_rel_percent': np.nan,
+            'different_pixels': np.nan,
+            'different_percent': np.nan,
             'pass': False
         }
 
-    abs_diff = np.abs(test - reference)
+    abs_diff = np.abs(
+        test - reference
+    )
 
     rel_diff = np.zeros_like(
         abs_diff,
         dtype=np.float64
     )
 
-    non_zero = np.abs(reference) > 0
+    non_zero = (
+        np.abs(reference) > 0
+    )
 
     rel_diff[non_zero] = (
         abs_diff[non_zero]
@@ -53,25 +61,47 @@ def compare_arrays(reference, test):
     zero_reference = ~non_zero
 
     rel_diff[
-        zero_reference & (abs_diff > 0)
+        zero_reference
+        & (abs_diff > 0)
     ] = np.inf
 
-    max_abs = np.max(abs_diff)
-    max_rel_percent = np.max(rel_diff)
+    max_abs = np.max(
+        abs_diff
+    )
+
+    max_rel_percent = np.max(
+        rel_diff
+    )
 
     finite_values = rel_diff[
         np.isfinite(rel_diff)
     ]
 
     if finite_values.size > 0:
+
         mean_rel_percent = np.mean(
             finite_values
         )
+
     else:
+
         mean_rel_percent = np.inf
 
+    different_pixels = np.count_nonzero(
+        abs_diff
+    )
+
+    total_pixels = reference.size
+
+    different_percent = (
+        different_pixels
+        / total_pixels
+        * 100.0
+    )
+
     passed = (
-        max_rel_percent < TOLERANCE_PERCENT
+        max_rel_percent
+        < TOLERANCE_PERCENT
     )
 
     return {
@@ -79,6 +109,8 @@ def compare_arrays(reference, test):
         'max_abs': max_abs,
         'max_rel_percent': max_rel_percent,
         'mean_rel_percent': mean_rel_percent,
+        'different_pixels': different_pixels,
+        'different_percent': different_percent,
         'pass': passed
     }
 
@@ -90,19 +122,25 @@ def run_test(
         filename_prefix):
 
     print()
-    print('=' * 90)
-    print(module_name + ' CROSS-VALIDATION')
-    print('=' * 90)
+    print('=' * 100)
+
+    print(
+        module_name
+        + ' CROSS-VALIDATION'
+    )
+
+    print('=' * 100)
 
     print(
         f"{'Band':<10}"
         f"{'Max Abs Diff':<20}"
         f"{'Max Rel Diff [%]':<22}"
         f"{'Mean Rel Diff [%]':<22}"
+        f"{'Different Pixels':<20}"
         f"{'Result':<10}"
     )
 
-    print('-' * 90)
+    print('-' * 100)
 
     module_pass = True
 
@@ -124,26 +162,30 @@ def run_test(
             filename
         )
 
-        if not os.path.exists(reference_file):
+        if not os.path.exists(
+                reference_file):
 
             print(
                 f"{band:<10}"
-                f"{'REFERENCE FILE MISSING':<64}"
+                f"{'REFERENCE FILE MISSING':<80}"
                 f"{'FAIL':<10}"
             )
 
             module_pass = False
+
             continue
 
-        if not os.path.exists(test_file):
+        if not os.path.exists(
+                test_file):
 
             print(
                 f"{band:<10}"
-                f"{'TEST FILE MISSING':<64}"
+                f"{'TEST FILE MISSING':<80}"
                 f"{'FAIL':<10}"
             )
 
             module_pass = False
+
             continue
 
         reference = read_toa(
@@ -159,15 +201,18 @@ def run_test(
             test
         )
 
-        if not result['shape_match']:
+        if not result[
+            'shape_match'
+        ]:
 
             print(
                 f"{band:<10}"
-                f"{'SHAPE MISMATCH':<64}"
+                f"{'SHAPE MISMATCH':<80}"
                 f"{'FAIL':<10}"
             )
 
             module_pass = False
+
             continue
 
         status = (
@@ -177,6 +222,7 @@ def run_test(
         )
 
         if not result['pass']:
+
             module_pass = False
 
         print(
@@ -184,10 +230,18 @@ def run_test(
             f"{result['max_abs']:<20.10e}"
             f"{result['max_rel_percent']:<22.10e}"
             f"{result['mean_rel_percent']:<22.10e}"
+            f"{result['different_pixels']:<20}"
             f"{status:<10}"
         )
 
-    print('-' * 90)
+        print(
+            f"           Different pixels: "
+            f"{result['different_pixels']} / "
+            f"{reference.size} "
+            f"({result['different_percent']:.8f} %)"
+        )
+
+    print('-' * 100)
 
     print(
         module_name,
@@ -201,7 +255,11 @@ def run_test(
 
 
 print()
-print('EODP END-TO-END CROSS-VALIDATION')
+
+print(
+    'EODP END-TO-END CROSS-VALIDATION'
+)
+
 print(
     'Tolerance:',
     TOLERANCE_PERCENT,
@@ -223,11 +281,18 @@ l1b_pass = run_test(
 )
 
 print()
-print('=' * 90)
+
+print('=' * 100)
 
 if ism_pass and l1b_pass:
-    print('FINAL E2E RESULT: PASS')
-else:
-    print('FINAL E2E RESULT: FAIL')
 
-print('=' * 90)
+    print(
+        'FINAL E2E RESULT: PASS'
+    )
+
+else:
+
+    print(
+        'FINAL E2E RESULT: FAIL'
+        
+print('=' * 100)
