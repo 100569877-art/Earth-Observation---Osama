@@ -7,7 +7,7 @@ from l1c.src.l1c import l1c
 auxdir = r'C:\Users\Osama\Documents\GitHub\Earth Observation - Osama\auxiliary'
 # GM dir + L1B dir
 indir = (
-    r'C:\Users\Osama\Desktop\Earth Observation\EODP_TER_2021-20260910T154749Z-1-001\EODP_TER_2021\EODP-TS-GEO\output'
+    r'C:\Users\Osama\Desktop\Earth Observation\EODP_TER_2021-20260910T154749Z-1-001\EODP_TER_2021\EODP-TS-L1C\input\gm_alt100_act_150'
     + ','
     + r'C:\Users\Osama\Desktop\Earth Observation\EODP_TER_2021-20260910T154749Z-1-001\EODP_TER_2021\EODP-TS-L1B\output'
 )
